@@ -4,6 +4,10 @@ import dao.UserDao;
 import dao.UserDaoImpl;
 import model.User;
 
+import java.time.Instant;
+import java.util.UUID;
+import java.sql.Timestamp;
+
 public class UserServiceImpl implements UserService {
     UserDao userDao = new UserDaoImpl();
 
@@ -29,5 +33,42 @@ public class UserServiceImpl implements UserService {
     @Override
     public User get(String username) {
         return userDao.get(username);
+    }
+
+    @Override
+    public String createResetToken(String usernameOrEmail, Instant expireAt) {
+        User u = userDao.getByUsernameOrEmail(usernameOrEmail);
+        if (u == null) return null;
+
+        String token = UUID.randomUUID().toString().replace("-", "");
+        Timestamp ts = Timestamp.from(expireAt);
+        boolean saved = userDao.saveResetToken(u.getId(), token, ts);
+        if (!saved) return null;
+        return token;
+    }
+
+    @Override
+    public User getByResetToken(String token) {
+        return userDao.getByResetToken(token);
+    }
+
+    @Override
+    public boolean resetPassword(String token, String newPassword) {
+        User u = userDao.getByResetToken(token);
+        if (u == null || u.getResetExpiry() == null) {
+            return false;
+        }
+        if (u.getResetExpiry().toInstant().isBefore(Instant.now())) {
+            return false;
+        }
+        boolean ok = userDao.updatePassword(u.getId(), newPassword);
+        if (!ok) return false;
+        userDao.clearResetToken(u.getId());
+        return true;
+    }
+
+    @Override
+    public User getByUsernameOrEmail(String term) {
+        return userDao.getByUsernameOrEmail(term);
     }
 }

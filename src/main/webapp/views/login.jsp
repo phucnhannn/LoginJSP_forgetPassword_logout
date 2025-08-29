@@ -22,14 +22,19 @@
 
     <%
         Object alert = request.getAttribute("alert");
+        Object success = request.getAttribute("success");
         if (alert != null) {
     %>
         <div class="alert alert-danger" role="alert"><%= alert.toString() %></div>
     <%
         }
+        if (success != null) {
+    %>
+        <div class="alert alert-success" role="alert"><%= success.toString() %></div>
+    <%
+        }
     %>
 
-    <!-- Dù JSP ở /views, action vẫn trỏ tới endpoint /login theo contextPath -->
     <form action="<%=request.getContextPath()%>/login" method="post">
         <div class="input-group mb-3">
             <div class="input-group-prepend"><span class="input-group-text"><i class="fa fa-user"></i></span></div>
@@ -44,8 +49,7 @@
                 <input type="checkbox" class="form-check-input" name="remember" id="remember">
                 <label class="form-check-label" for="remember">Nhớ tôi</label>
             </div>
-            <!-- Nếu forgot.jsp/register.jsp không nằm trong /views, sửa lại đường dẫn cho đúng -->
-            <a href="<%=request.getContextPath()%>/forgot.jsp">Quên mật khẩu?</a>
+            <a href="<%=request.getContextPath()%>/forgot">Quên mật khẩu?</a>
         </div>
         <button type="submit" class="btn btn-primary btn-login">Đăng nhập</button>
     </form>

@@ -2,6 +2,7 @@ package model;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.sql.Timestamp;
 
 @SuppressWarnings("serial")
 public class User implements Serializable {
@@ -14,6 +15,10 @@ public class User implements Serializable {
     private int roleid;
     private String phone;
     private Date createdDate;
+
+    // New fields for password reset
+    private String resetToken;
+    private Timestamp resetExpiry;
 
     public User() {}
 
@@ -30,7 +35,6 @@ public class User implements Serializable {
         this.createdDate = createdDate;
     }
 
-    // getters và setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 
@@ -57,4 +61,10 @@ public class User implements Serializable {
 
     public Date getCreatedDate() { return createdDate; }
     public void setCreatedDate(Date createdDate) { this.createdDate = createdDate; }
+
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+
+    public Timestamp getResetExpiry() { return resetExpiry; }
+    public void setResetExpiry(Timestamp resetExpiry) { this.resetExpiry = resetExpiry; }
 }
