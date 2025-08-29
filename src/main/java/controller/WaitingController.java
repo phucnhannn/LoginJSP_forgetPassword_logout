@@ -17,18 +17,24 @@ public class WaitingController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        HttpSession session = req.getSession();
-        if (session != null && session.getAttribute("account") != null) {
-            User u = (User) session.getAttribute("account");
-            if (u.getRoleid() == 1) {
-                resp.sendRedirect(req.getContextPath()+"/admin/home");
-            } else if (u.getRoleid() == 2) {
-                resp.sendRedirect(req.getContextPath()+"/manager/home");
-            } else {
-                resp.sendRedirect(req.getContextPath()+"/home");
-            }
-        } else {
+        HttpSession session = req.getSession(false); // không tạo session mới
+        User u = (session != null) ? (User) session.getAttribute("account") : null;
+
+        System.out.println("[DEBUG] /waiting -> session=" + (session==null?"null":session.getId())
+                + ", account=" + (u==null?"null":u.getUserName())
+                + ", role=" + (u==null?"?":u.getRoleid()));
+
+        if (u == null) {
             resp.sendRedirect(req.getContextPath()+"/login");
+            return;
+        }
+
+        if (u.getRoleid() == 1) {
+            resp.sendRedirect(req.getContextPath()+"/admin/home");
+        } else if (u.getRoleid() == 2) {
+            resp.sendRedirect(req.getContextPath()+"/manager/home");
+        } else {
+            resp.sendRedirect(req.getContextPath()+"/home.jsp");
         }
     }
 }

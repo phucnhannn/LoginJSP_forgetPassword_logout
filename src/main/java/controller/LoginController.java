@@ -15,7 +15,8 @@ import service.UserService;
 import service.UserServiceImpl;
 
 @SuppressWarnings("serial")
-@WebServlet(urlPatterns = {"/", "/login"})
+// CHỈ map "/login" nếu đã có RootRedirectController map "/"
+@WebServlet(urlPatterns = {"/login"})
 public class LoginController extends HttpServlet {
 
     @Override
@@ -27,24 +28,32 @@ public class LoginController extends HttpServlet {
             return;
         }
 
+        // Auto login từ cookie "username"
         Cookie[] cookies = req.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("username")) {
-                    session = req.getSession(true);
-                    session.setAttribute("username", cookie.getValue());
-                    resp.sendRedirect(req.getContextPath() + "/waiting");
-                    return;
+                if ("username".equals(cookie.getName())) {
+                    String username = cookie.getValue();
+                    UserService service = new UserServiceImpl();
+                    User user = service.get(username);
+                    if (user != null) {
+                        session = req.getSession(true);
+                        session.setAttribute("account", user);
+                        resp.sendRedirect(req.getContextPath() + "/waiting");
+                        return;
+                    }
                 }
             }
         }
-        req.getRequestDispatcher("views/login.jsp").forward(req, resp);
+
+        // login.jsp hiện nằm trong /views
+        req.getRequestDispatcher("/views/login.jsp").forward(req, resp);
     }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        resp.setContentType("text/html");
+        resp.setContentType("text/html; charset=UTF-8");
         resp.setCharacterEncoding("UTF-8");
         req.setCharacterEncoding("UTF-8");
 
@@ -53,7 +62,7 @@ public class LoginController extends HttpServlet {
         boolean isRememberMe = "on".equals(req.getParameter("remember"));
         String alertMsg = "";
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (username == null || username.isEmpty() || password == null || password.isEmpty()) {
             alertMsg = "Tài khoản hoặc mật khẩu không được rỗng";
             req.setAttribute("alert", alertMsg);
             req.getRequestDispatcher("/views/login.jsp").forward(req, resp);
@@ -62,23 +71,39 @@ public class LoginController extends HttpServlet {
 
         UserService service = new UserServiceImpl();
         User user = service.login(username, password);
+
+        System.out.println("[DEBUG] Đăng nhập cho: " + username);
+        System.out.println("[DEBUG] Đối tượng User sau khi đăng nhập: " + (user == null ? "null" : "Tìm thấy với vai trò " + user.getRoleid()));
+
         if (user != null) {
             HttpSession session = req.getSession(true);
             session.setAttribute("account", user);
+            System.out.println("[DEBUG] LOGIN OK, JSESSIONID=" + session.getId());
+
             if (isRememberMe) {
-                saveRememberMe(resp, username);
+                saveRememberMe(req, resp, username);
             }
             resp.sendRedirect(req.getContextPath() + "/waiting");
         } else {
-            alertMsg = "Tài khoản hoặc mật khẩu không đúng";
+            User userCheck = service.get(username);
+            if (userCheck == null) {
+                alertMsg = "Tài khoản không tồn tại";
+            } else {
+                alertMsg = "Tài khoản hoặc mật khẩu không đúng";
+            }
             req.setAttribute("alert", alertMsg);
+            // Forward về /views/login.jsp vì file nằm trong /views
             req.getRequestDispatcher("/views/login.jsp").forward(req, resp);
         }
     }
 
-    private void saveRememberMe(HttpServletResponse response, String username) {
+    private void saveRememberMe(HttpServletRequest req, HttpServletResponse resp, String username) {
         Cookie cookie = new Cookie("username", username);
-        cookie.setMaxAge(30 * 60);
-        response.addCookie(cookie);
+        cookie.setMaxAge(30 * 60); // 30 phút
+        String ctx = req.getContextPath();
+        cookie.setPath((ctx == null || ctx.isEmpty()) ? "/" : ctx);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(req.isSecure());
+        resp.addCookie(cookie);
     }
 }
