@@ -4,38 +4,26 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Manager Home</title>
+    <title>Admin Home</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 </head>
 <body class="bg-light">
 <%
     User user = (User) session.getAttribute("account");
-    if (user == null || user.getRoleid() != 2) {
+    if (user == null || user.getRoleid() != 1) {
         response.sendRedirect(request.getContextPath() + "/login");
         return;
-    }
-
-    // Lấy tên vai trò từ roleid
-    String roleName = "User";
-    if (user.getRoleid() == 1) {
-        roleName = "Admin";
-    } else if (user.getRoleid() == 2) {
-        roleName = "Manager";
     }
 %>
 <div class="container mt-5">
     <div class="card shadow p-4">
         <h3 class="text-success text-center">
-            Welcome Manager: <%= user.getUserName() %>!
+            Welcome Admin: <%= user.getUserName() %>!
         </h3>
         <h4 class="text-info text-center mt-2">
-            You are logged in as <b><%= roleName %></b>
+            You are logged in as <b>Admin</b> (roleid: 1)
         </h4>
         <div class="text-center mt-4">
-            <%-- Nếu là Admin thì hiện nút Quản lý category --%>
-            <% if ("Admin".equals(roleName)) { %>
-                <a href="<%=request.getContextPath()%>/admin/category/list" class="btn btn-primary mr-2">Quản lý category</a>
-            <% } %>
             <a href="<%=request.getContextPath()%>/logout" class="btn btn-danger">Logout</a>
         </div>
     </div>
